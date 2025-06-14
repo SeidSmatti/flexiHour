@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flexi Hour</title>
+    <title>Temporal Flux Clock</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -31,10 +31,6 @@
         .hour-hand {
             stroke: #f8fafc; /* slate-50 */
             stroke-width: 6;
-        }
-        .minute-hand {
-            stroke: #f8fafc; /* slate-50 */
-            stroke-width: 4;
         }
         .second-hand {
             stroke: #fb7185; /* rose-400 */
@@ -78,7 +74,6 @@
                 <g id="hour-markers"></g>
                 <!-- Hands -->
                 <line id="hour-hand" x1="100" y1="100" x2="100" y2="60" class="hand hour-hand"/>
-                <line id="minute-hand" x1="100" y1="100" x2="100" y2="40" class="hand minute-hand"/>
                 <line id="second-hand" x1="100" y1="100" x2="100" y2="30" class="hand second-hand"/>
                 <circle cx="100" cy="100" r="4" class="center-dot"/>
             </svg>
@@ -108,7 +103,6 @@
     <script>
         // --- DOM Elements ---
         const hourHand = document.getElementById('hour-hand');
-        const minuteHand = document.getElementById('minute-hand');
         const secondHand = document.getElementById('second-hand');
         const digitalClock = document.getElementById('digital-clock');
         const dayInfo = document.getElementById('day-info');
@@ -123,10 +117,9 @@
 
         /**
          * Generates the tick marks for the hours on the analog clock face.
-         * The number of marks depends on the custom hour definition.
          */
         function generateHourMarkers() {
-            hourMarkersContainer.innerHTML = ''; // Clear existing markers
+            hourMarkersContainer.innerHTML = '';
             const totalCustomHoursInDay = 1440 / customHourDuration;
             const angleStep = 360 / totalCustomHoursInDay;
 
@@ -136,7 +129,6 @@
                 const y1 = 100 - 85 * Math.cos(angle * Math.PI / 180);
                 const x2 = 100 + 95 * Math.sin(angle * Math.PI / 180);
                 const y2 = 100 - 95 * Math.cos(angle * Math.PI / 180);
-                
                 const isMajorTick = (totalCustomHoursInDay <= 24) || (i % Math.round(totalCustomHoursInDay/12) === 0);
 
                 const marker = document.createElementNS('http://www.w3.org/2000/svg', 'line');
@@ -152,7 +144,7 @@
         }
 
         /**
-         * The main clock update function. Runs every second.
+         * The main clock update function.
          */
         function updateClock() {
             const now = new Date();
@@ -160,35 +152,25 @@
             const realMinutes = now.getMinutes();
             const seconds = now.getSeconds();
 
-            // --- Custom Time Calculation ---
             const totalMinutesSinceMidnight = (realHours * 60) + realMinutes;
             const customHour = Math.floor(totalMinutesSinceMidnight / customHourDuration);
-            const customMinute = totalMinutesSinceMidnight % customHourDuration;
 
-            // --- Update Digital Clock ---
             const formattedHour = String(customHour).padStart(2, '0');
-            const formattedMinute = String(customMinute).padStart(2, '0');
+            const formattedMinute = String(realMinutes).padStart(2, '0');
             const formattedSecond = String(seconds).padStart(2, '0');
             digitalClock.textContent = `${formattedHour}:${formattedMinute}:${formattedSecond}`;
 
-            // --- Update Analog Clock ---
             const totalCustomHoursInDay = 1440 / customHourDuration;
-
-            // Calculate rotation angles
             const secondsAngle = (seconds / 60) * 360;
-            const minutesAngle = (customMinute / customHourDuration) * 360;
-            // The hour hand should also move smoothly between the hour marks
-            const hourAngle = ((customHour + (customMinute / customHourDuration)) / totalCustomHoursInDay) * 360;
+            const minuteOfCustomHour = totalMinutesSinceMidnight % customHourDuration;
+            const hourAngle = ((customHour + (minuteOfCustomHour / customHourDuration)) / totalCustomHoursInDay) * 360;
 
-            // Apply transformations
             secondHand.style.transform = `rotate(${secondsAngle}deg)`;
-            minuteHand.style.transform = `rotate(${minutesAngle}deg)`;
             hourHand.style.transform = `rotate(${hourAngle}deg)`;
         }
 
         /**
          * Handles the click event for the 'Apply' button.
-         * Updates the custom hour duration and refreshes the clock display.
          */
         function handleSetTime() {
             const newDuration = parseInt(minutesInput.value, 10);
@@ -198,29 +180,24 @@
                 const totalCustomHoursInDay = (1440 / customHourDuration).toFixed(2).replace(/\.00$/, '');
                 dayInfo.textContent = `A day now has ${totalCustomHoursInDay} custom hours.`;
 
-                generateHourMarkers(); // Redraw markers for the new "hour" system
-                updateClock(); // Immediately update the clock to the new time
+                generateHourMarkers();
+                updateClock();
             } else {
-                alert("Please enter a value between 1 and 1440.");
+                const currentButtonColor = setButton.style.backgroundColor;
+                setButton.style.backgroundColor = '#f43f5e'; // rose-500
+                minutesInput.focus();
+                setTimeout(() => { setButton.style.backgroundColor = currentButtonColor; }, 1500);
             }
         }
 
-
-        // --- Event Listeners ---
+        // --- Event Listeners & Initialization ---
         setButton.addEventListener('click', handleSetTime);
         minutesInput.addEventListener('keydown', (event) => {
-            if (event.key === 'Enter') {
-                handleSetTime();
-            }
+            if (event.key === 'Enter') handleSetTime();
         });
 
-
-        // --- Initialization ---
-        // Initial call to set everything up
         generateHourMarkers();
         updateClock(); 
-        
-        // Start the clock interval
         setInterval(updateClock, 1000);
     </script>
 </body>
