@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flexi Hour</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;400&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a; /* slate-900 */
+            color: #e2e8f0; /* slate-200 */
+            overflow: hidden;
+        }
+        .font-orbitron {
+            font-family: 'Orbitron', sans-serif;
+        }
+        .clock-face {
+            stroke: #38bdf8; /* sky-400 */
+            stroke-width: 2;
+            fill: none;
+        }
+        .hand {
+            stroke-linecap: round;
+            transform-origin: center;
+            transition: transform 0.5s cubic-bezier(0.4, 2.5, 0.6, 1);
+        }
+        .hour-hand {
+            stroke: #f8fafc; /* slate-50 */
+            stroke-width: 6;
+        }
+        .minute-hand {
+            stroke: #f8fafc; /* slate-50 */
+            stroke-width: 4;
+        }
+        .second-hand {
+            stroke: #fb7185; /* rose-400 */
+            stroke-width: 2;
+        }
+        .center-dot {
+            fill: #fb7185; /* rose-400 */
+        }
+        .glow {
+            filter: drop-shadow(0 0 5px #38bdf8) drop-shadow(0 0 10px #38bdf8);
+        }
+         .input-glow:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px #0f172a, 0 0 0 4px #38bdf8;
+        }
+        /* Custom scrollbar for better aesthetics */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1e293b; /* slate-800 */
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155; /* slate-600 */
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569; /* slate-500 */
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen">
+
+    <div class="w-full max-w-lg mx-auto p-4 md:p-8 space-y-8 text-center">
+
+        <!-- Analog Clock -->
+        <div class="relative w-64 h-64 md:w-80 md:h-80 mx-auto">
+            <svg viewBox="0 0 200 200" class="w-full h-full glow">
+                <circle cx="100" cy="100" r="95" class="clock-face"/>
+                <!-- Hour Markers -->
+                <g id="hour-markers"></g>
+                <!-- Hands -->
+                <line id="hour-hand" x1="100" y1="100" x2="100" y2="60" class="hand hour-hand"/>
+                <line id="minute-hand" x1="100" y1="100" x2="100" y2="40" class="hand minute-hand"/>
+                <line id="second-hand" x1="100" y1="100" x2="100" y2="30" class="hand second-hand"/>
+                <circle cx="100" cy="100" r="4" class="center-dot"/>
+            </svg>
+        </div>
+
+        <!-- Digital Clock -->
+        <div id="digital-clock" class="font-orbitron text-5xl md:text-7xl font-bold tracking-widest text-slate-50" style="text-shadow: 0 0 10px #38bdf8, 0 0 20px #38bdf8;">
+            00:00:00
+        </div>
+        <div id="day-info" class="text-sky-400 text-sm -mt-6">
+            A day has 24 standard hours.
+        </div>
+
+        <!-- Settings -->
+        <div class="p-6 bg-slate-800/50 backdrop-blur-sm rounded-xl border border-slate-700 space-y-4">
+            <h2 class="text-lg font-semibold text-slate-100">Define Your Hour</h2>
+            <p class="text-sm text-slate-400">Set how many standard minutes make up one custom hour.</p>
+            <div class="flex items-center justify-center gap-4">
+                <input type="number" id="minutes-input" value="60" min="1" max="1440" class="w-24 bg-slate-900 border border-slate-600 rounded-md p-2 text-center text-lg font-semibold focus:border-sky-400 transition input-glow">
+                <button id="set-button" class="px-5 py-2 bg-sky-500 hover:bg-sky-400 text-slate-900 font-bold rounded-md transition-all duration-300 transform hover:scale-105 active:scale-95">
+                    Apply
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        const hourHand = document.getElementById('hour-hand');
+        const minuteHand = document.getElementById('minute-hand');
+        const secondHand = document.getElementById('second-hand');
+        const digitalClock = document.getElementById('digital-clock');
+        const dayInfo = document.getElementById('day-info');
+        const minutesInput = document.getElementById('minutes-input');
+        const setButton = document.getElementById('set-button');
+        const hourMarkersContainer = document.getElementById('hour-markers');
+
+        // --- State ---
+        let customHourDuration = 60; // Default: 1 hour = 60 minutes
+
+        // --- Functions ---
+
+        /**
+         * Generates the tick marks for the hours on the analog clock face.
+         * The number of marks depends on the custom hour definition.
+         */
+        function generateHourMarkers() {
+            hourMarkersContainer.innerHTML = ''; // Clear existing markers
+            const totalCustomHoursInDay = 1440 / customHourDuration;
+            const angleStep = 360 / totalCustomHoursInDay;
+
+            for (let i = 0; i < totalCustomHoursInDay; i++) {
+                const angle = i * angleStep;
+                const x1 = 100 + 85 * Math.sin(angle * Math.PI / 180);
+                const y1 = 100 - 85 * Math.cos(angle * Math.PI / 180);
+                const x2 = 100 + 95 * Math.sin(angle * Math.PI / 180);
+                const y2 = 100 - 95 * Math.cos(angle * Math.PI / 180);
+                
+                const isMajorTick = (totalCustomHoursInDay <= 24) || (i % Math.round(totalCustomHoursInDay/12) === 0);
+
+                const marker = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                marker.setAttribute('x1', x1);
+                marker.setAttribute('y1', y1);
+                marker.setAttribute('x2', x2);
+                marker.setAttribute('y2', y2);
+                marker.setAttribute('stroke', '#38bdf8');
+                marker.setAttribute('stroke-width', isMajorTick ? 2 : 1);
+                
+                hourMarkersContainer.appendChild(marker);
+            }
+        }
+
+        /**
+         * The main clock update function. Runs every second.
+         */
+        function updateClock() {
+            const now = new Date();
+            const realHours = now.getHours();
+            const realMinutes = now.getMinutes();
+            const seconds = now.getSeconds();
+
+            // --- Custom Time Calculation ---
+            const totalMinutesSinceMidnight = (realHours * 60) + realMinutes;
+            const customHour = Math.floor(totalMinutesSinceMidnight / customHourDuration);
+            const customMinute = totalMinutesSinceMidnight % customHourDuration;
+
+            // --- Update Digital Clock ---
+            const formattedHour = String(customHour).padStart(2, '0');
+            const formattedMinute = String(customMinute).padStart(2, '0');
+            const formattedSecond = String(seconds).padStart(2, '0');
+            digitalClock.textContent = `${formattedHour}:${formattedMinute}:${formattedSecond}`;
+
+            // --- Update Analog Clock ---
+            const totalCustomHoursInDay = 1440 / customHourDuration;
+
+            // Calculate rotation angles
+            const secondsAngle = (seconds / 60) * 360;
+            const minutesAngle = (customMinute / customHourDuration) * 360;
+            // The hour hand should also move smoothly between the hour marks
+            const hourAngle = ((customHour + (customMinute / customHourDuration)) / totalCustomHoursInDay) * 360;
+
+            // Apply transformations
+            secondHand.style.transform = `rotate(${secondsAngle}deg)`;
+            minuteHand.style.transform = `rotate(${minutesAngle}deg)`;
+            hourHand.style.transform = `rotate(${hourAngle}deg)`;
+        }
+
+        /**
+         * Handles the click event for the 'Apply' button.
+         * Updates the custom hour duration and refreshes the clock display.
+         */
+        function handleSetTime() {
+            const newDuration = parseInt(minutesInput.value, 10);
+            if (newDuration >= 1 && newDuration <= 1440) {
+                customHourDuration = newDuration;
+                
+                const totalCustomHoursInDay = (1440 / customHourDuration).toFixed(2).replace(/\.00$/, '');
+                dayInfo.textContent = `A day now has ${totalCustomHoursInDay} custom hours.`;
+
+                generateHourMarkers(); // Redraw markers for the new "hour" system
+                updateClock(); // Immediately update the clock to the new time
+            } else {
+                alert("Please enter a value between 1 and 1440.");
+            }
+        }
+
+
+        // --- Event Listeners ---
+        setButton.addEventListener('click', handleSetTime);
+        minutesInput.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                handleSetTime();
+            }
+        });
+
+
+        // --- Initialization ---
+        // Initial call to set everything up
+        generateHourMarkers();
+        updateClock(); 
+        
+        // Start the clock interval
+        setInterval(updateClock, 1000);
+    </script>
+</body>
+</html>
