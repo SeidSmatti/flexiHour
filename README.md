@@ -30,3 +30,8 @@ How to Use
 
 Live Demo
 
+You can try a live demo here : 
+
+https://glittery-youtiao-6ae4d6.netlify.app/
+
+But launching the index.html file will work just fine
