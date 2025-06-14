@@ -1,4 +1,4 @@
-Temporal Flux Clock
+# flexiHour
 
 A customizable web-based clock where you can define the length of an hour in minutes.
 
